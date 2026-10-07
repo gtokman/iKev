@@ -26,6 +26,8 @@ public enum KevModelError: Error, Sendable {
     case unsupportedBackbone(String)
     case unsupportedCheckpoint(String)
     case missingHiddenStates
+    /// MLX needs a real Metal GPU family; the iOS Simulator aborts inside Metal device setup.
+    case simulatorUnsupported
 }
 
 extension MLXLMCommon.Tokenizer {
@@ -48,6 +50,9 @@ public actor KevModel {
 
     /// Load a checkpoint directory produced by scripts/convert.py (or downloaded from the Hub).
     public static func load(directory: URL, tokenizerLoader: any TokenizerLoader) async throws -> KevModel {
+        #if targetEnvironment(simulator)
+            throw KevModelError.simulatorUnsupported
+        #endif
         let metaURL = directory.appending(path: "kev.json")
         let metadata = try JSONDecoder().decode(KevCheckpointMetadata.self, from: Data(contentsOf: metaURL))
         guard metadata.format == 1 else {
@@ -56,6 +61,7 @@ public actor KevModel {
         guard !metadata.optionIsolation else {
             throw KevModelError.unsupportedCheckpoint("option_isolation checkpoints are not supported")
         }
+        Memory.cacheLimit = 256 * 1024 * 1024
         let container = try await LLMModelFactory.shared.loadContainer(
             from: directory, using: tokenizerLoader)
         try await container.perform { context in

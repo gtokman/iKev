@@ -79,6 +79,42 @@ xcodebuild test -scheme Kev -destination 'platform=macOS' -skipPackagePluginVali
 
 The parity suite is skipped unless `build/kev-0.8b-mlx-4bit` (or `KEV_CHECKPOINT`) and `reference.json` exist.
 
+## Benchmark
+
+`scripts/bench/messages.json` holds 50 labelled messages (16 casual, 14 deviceAction, 20 assistant) and
+`scripts/bench/questions.json` the router wordings tried. `KevBenchmark` loads a checkpoint cold, routes each
+message once and writes `build/bench-<checkpoint>-<platform>.md` (per-message probabilities, confidence
+sweep, question-wording comparison):
+
+```sh
+TEST_RUNNER_KEV_BENCH=1 TEST_RUNNER_KEV_CHECKPOINT=$PWD/build/kev-0.8b-mlx-8bit \
+  xcodebuild test -scheme Kev -destination 'platform=macOS' \
+  -skipPackagePluginValidation -skipMacroValidation -only-testing:KevTests/KevBenchmark
+```
+
+Apple M4 Pro (virtualised, 16 GB), macOS 26.5, `Memory.cacheLimit = 256 MB`:
+
+| checkpoint | cold load | decide p50 / p95 | footprint loaded / peak | accuracy @0 | handled / accuracy @0.3 |
+|---|---:|---:|---:|---:|---:|
+| 8-bit (787 MB) | 1.4 s | 29 / 32 ms | 1071 / 1190 MB | 43/50 | 43/50 → 91% |
+| 4-bit (428 MB) | 1.5 s | 30 / 32 ms | 637 / 835 MB | 46/50 | 40/50 → 92% |
+
+Notes:
+
+- Decide latency is prefill-bound and identical for both precisions; the difference is memory.
+- Without a cache limit MLX's buffer cache let the 8-bit footprint peak at 1.7 GB; 32 MB halved
+  throughput (63 ms). 256 MB is the compromise, set in `KevModel.load`.
+- The 4-bit/8-bit accuracy gap (3 messages) is within noise for 50 samples; the parity run shows 4-bit
+  squashes probability margins, which is what the confidence threshold acts on.
+- Remaining misses are all "chatty acknowledgement vs assistant" (`sounds good`, `you're the best`) and
+  "read my data vs act on my device" (`what's on my calendar tomorrow?`, `remember that …`). The second
+  group is a product decision about where calendar/memory *reads* should go; the router question can be
+  reworded in `scripts/bench/questions.json` and re-measured.
+- **iOS Simulator is not supported** — MLX needs a real Metal GPU family (see mlx-swift's
+  troubleshooting doc); the simulator process aborts inside Metal device setup. `KevModel.load` throws
+  `KevModelError.simulatorUnsupported` there so an app can fall back instead of crashing. The package
+  itself builds for the simulator, so the rest of an app still runs. Device numbers need a real iPhone.
+
 ## Status
 
 Verified on an Apple Silicon Mac. Not yet measured on iPhone: load time, memory (the 4-bit backbone is ~0.5 GB of
