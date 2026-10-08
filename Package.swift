@@ -9,7 +9,8 @@ let package = Package(
         .visionOS(.v1),
     ],
     products: [
-        .library(name: "Kev", targets: ["Kev"])
+        .library(name: "Kev", targets: ["Kev"]),
+        .executable(name: "kev-dungeon", targets: ["KevDungeon"]),
     ],
     dependencies: [
         .package(
@@ -33,6 +34,23 @@ let package = Package(
         .testTarget(
             name: "KevTests",
             dependencies: ["Kev"]
+        ),
+        // Example: a roguelike that asks Kev for every move. The engine is a library so it can be tested without Metal.
+        .target(
+            name: "KevDungeonGame",
+            dependencies: ["Kev"],
+            path: "Examples/Dungeon/Game",
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .executableTarget(
+            name: "KevDungeon",
+            dependencies: ["KevDungeonGame"],
+            path: "Examples/Dungeon/CLI",
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .testTarget(
+            name: "KevDungeonTests",
+            dependencies: ["KevDungeonGame"]
         ),
     ]
 )

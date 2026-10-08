@@ -120,6 +120,36 @@ Notes:
   `KevModelError.simulatorUnsupported` there so an app can fall back instead of crashing. The package
   itself builds for the simulator, so the rest of an app still runs. Device numbers need a real iPhone.
 
+## Example: kev-dungeon
+
+`Examples/Dungeon` is a game loop with Kev as the player. A tiny roguelike (reach the exit alive, gold is a bonus,
+goblins bite) runs as a `while` loop; every turn the game writes the situation in plain words plus an ASCII map as the
+Kev *state*, offers the legal moves as the *options* of one choice question, and takes whatever the pointer head picks.
+No generation, no parsing, no illegal moves. A second score question rates how dangerous the spot is.
+
+```sh
+scripts/kev-dungeon.sh --release                                   # downloads gtokman/iKev, random seed
+scripts/kev-dungeon.sh --release --checkpoint build/kev-0.8b-mlx-8bit --seed 7 --delay 0.5
+scripts/kev-dungeon.sh --random --seed 7                           # uniform legal moves, no model: the baseline
+```
+
+```
+── turn 6 ──────────────────────────────────
+  north        ███░░░░░░░ 0.30  attack the goblin standing there (it has 2 HP left)
+  south        ██░░░░░░░░ 0.20  pick up the potion lying there
+→ east         ████░░░░░░ 0.38  attack the goblin standing there (it has 2 HP left)
+  west         █░░░░░░░░░ 0.13  step away from the exit, back where you just came from
+  danger: risky (safe 0.39, risky 0.47, deadly 0.14), confidence 0.17
+  You strike the goblin to the east (1 HP left). The goblin bites you (HP 3/5).
+```
+
+The script wraps `xcodebuild` because `swift run` cannot find MLX's metallib (same reason as the tests). Kev-0.8B
+escapes 6 of seeds 1–11 with the 8-bit checkpoint and fights goblins more than it should; the random baseline escapes 1.
+Each decision is one prefill over ~400 tokens, ≈140 ms on an M4 Pro in Release. The option texts are the game being
+honest about what a move does (`step closer to the exit` uses the walking distance around walls, `back where you just
+came from` marks a reversal); change them in `Dungeon.describe` and the narrative in `Dungeon.narrative` to see how the
+play changes. The engine tests never touch the model, so they run with plain `swift test --filter DungeonTests`.
+
 ## Status
 
 Verified on an Apple Silicon Mac. Not yet measured on iPhone: load time, memory (the 4-bit backbone is ~0.5 GB of
