@@ -39,6 +39,11 @@ final class GameModel {
 
     func loadModel() async {
         if player != nil { return }
+        #if targetEnvironment(simulator)
+            player = RandomPlayer(rng: SeededGenerator(seed: seed))
+            brain = .random(reason: "MLX needs a real GPU; the Simulator plays random moves. Run on an iPhone to see Kev.")
+            return
+        #endif
         do {
             let model = try await KevModel.load(hubID: Self.hubID, revision: Self.revision) { progress in
                 let fraction = progress.fractionCompleted
@@ -49,9 +54,6 @@ final class GameModel {
             }
             player = KevPlayer(model: model)
             brain = .kev
-        } catch KevModelError.simulatorUnsupported {
-            player = RandomPlayer(rng: SeededGenerator(seed: seed))
-            brain = .random(reason: "MLX needs a real GPU; the Simulator plays random moves. Run on an iPhone to see Kev.")
         } catch {
             player = RandomPlayer(rng: SeededGenerator(seed: seed))
             brain = .random(reason: "Kev failed to load (\(error)); playing random moves.")
