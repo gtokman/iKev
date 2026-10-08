@@ -1,4 +1,4 @@
-# kev-swift
+# iKev
 
 [Kev](https://github.com/jaredpalmer/kev) decision models on Apple devices, running on [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm).
 
