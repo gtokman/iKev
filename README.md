@@ -150,6 +150,15 @@ honest about what a move does (`step closer to the exit` uses the walking distan
 came from` marks a reversal); change them in `Dungeon.describe` and the narrative in `Dungeon.narrative` to see how the
 play changes. The engine tests never touch the model, so they run with plain `swift test --filter DungeonTests`.
 
+### On an iPhone
+
+`Examples/DungeonApp/KevDungeon.xcodeproj` is the same game as a SwiftUI app (iOS 17+, iPhone only): open it, pick
+your team, run on a device. It downloads `gtokman/iKev@4bit` on first launch (0.43 GB, progress shown), then plays
+with Kev's probabilities, the danger meter and a speed slider; Step/Play/Pause, New (random seed) and Replay (same
+seed). The project is generated from `project.yml` with [xcodegen](https://github.com/yonaskolb/XcodeGen) and depends
+on the `KevDungeonGame` product of this package, so the engine and the Kev questions are shared with the CLI. In the
+Simulator MLX cannot run, so the app falls back to the random player and says so.
+
 ## Status
 
 Verified on an Apple Silicon Mac. Not yet measured on iPhone: load time, memory (the 4-bit backbone is ~0.5 GB of

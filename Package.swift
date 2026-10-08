@@ -11,6 +11,7 @@ let package = Package(
     products: [
         .library(name: "Kev", targets: ["Kev"]),
         .executable(name: "kev-dungeon", targets: ["KevDungeon"]),
+        .library(name: "KevDungeonGame", targets: ["KevDungeonGame"]),
     ],
     dependencies: [
         .package(
