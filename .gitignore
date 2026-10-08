@@ -2,5 +2,6 @@
 build/
 .swiftpm/
 *.xcodeproj
+!Examples/DungeonApp/KevDungeon.xcodeproj
 DerivedData/
 *.profraw
