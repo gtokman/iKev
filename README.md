@@ -22,9 +22,6 @@ answers[0].confidence      // 0 = uniform, 1 = certain
 answers[1].yes             // 0.93
 ```
 
-`KevRouter` wraps the one question OS1 asks before every chat turn (casual / deviceAction / assistant) and returns
-`nil` when Kev is not confident enough, so the caller falls back to its default path.
-
 ## What is ported
 
 | kev (Python) | here |
