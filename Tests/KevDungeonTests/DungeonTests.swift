@@ -73,4 +73,33 @@ struct DungeonTests {
         }
         Issue.record("no seed in 1...200 starts next to gold")
     }
+
+    /// The option text promises an outcome (kill, bite, death); applying the move must deliver exactly that.
+    @Test func describedConsequencesComeTrue() {
+        var deaths = 0, kills = 0
+        for seed in UInt64(1) ... 300 {
+            var rng = SystemRandomNumberGenerator()
+            var dungeon = Dungeon(seed: seed)
+            while dungeon.outcome == .playing {
+                let move = dungeon.availableMoves.randomElement(using: &rng)!
+                let text = dungeon.describe(move)
+                let goblinsBefore = dungeon.goblins.count
+                let healed = move == .drinkPotion ? min(Dungeon.heroMaxHP, dungeon.hp + Dungeon.potionHeal) : dungeon.hp
+                dungeon.apply(move)
+                if text.contains("and you die") {
+                    deaths += 1
+                    #expect(dungeon.outcome == .died, "\(text)")
+                } else if text.contains("bites you there") {
+                    #expect(dungeon.hp < healed && dungeon.outcome != .died, "\(text)")
+                } else if dungeon.outcome != .escaped {
+                    #expect(dungeon.hp == healed, "\(text) but HP is \(dungeon.hp), not \(healed)")
+                }
+                if text.contains("kill it") {
+                    kills += 1
+                    #expect(dungeon.goblins.count == goblinsBefore - 1, "\(text)")
+                }
+            }
+        }
+        #expect(deaths > 0 && kills > 0)
+    }
 }
