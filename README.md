@@ -55,6 +55,14 @@ uv run --python 3.12 --with mlx-lm --with torch --with huggingface_hub --with sa
 Upload the directory to a Hub model repo and pass its id to `KevModel.load(hubID:)`, or ship it in the app bundle and
 use `KevModel.load(directory:)`.
 
+Published checkpoint: [`gtokman/iKev`](https://huggingface.co/gtokman/iKev) (8-bit, 787 MB, public). Smoke-test the
+download + one decision from the Hub (needs network, ~0.8 GB cache):
+
+```sh
+TEST_RUNNER_KEV_HUB=gtokman/iKev xcodebuild test -scheme Kev -destination 'platform=macOS' \
+  -skipPackagePluginValidation -skipMacroValidation -only-testing:KevTests/KevHubTests
+```
+
 ## Parity
 
 `scripts/parity/records.json` holds a few records; `reference.py` scores them with kev's own MLX backend
