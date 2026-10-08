@@ -3,3 +3,4 @@ build/
 .swiftpm/
 *.xcodeproj
 DerivedData/
+*.profraw
