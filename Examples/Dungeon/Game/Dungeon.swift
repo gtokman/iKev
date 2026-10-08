@@ -194,30 +194,45 @@ public struct Dungeon: Sendable {
     }
 
     /// What the hero would find by taking `move`: the option text the player chooses among.
+    /// Kept short — long option texts drown the signal for a 0.8B model — but a fatal move always says so, since
+    /// the model will not combine the hero's HP in the state with the goblin's HP in the option by itself.
     public func describe(_ move: Move) -> String {
+        var parts: [String] = []
+        var hpAfter = hp
+        var position = hero
+        var survivors = goblins
         switch move {
         case .drinkPotion:
-            return "drink a potion to heal \(Dungeon.potionHeal) HP (you have \(potions))"
+            hpAfter = min(Dungeon.heroMaxHP, hp + Dungeon.potionHeal)
+            parts.append("drink a potion to heal \(Dungeon.potionHeal) HP (you have \(potions))")
         case .step(let d):
             let target = hero + d.delta
-            if let g = goblin(at: target) {
-                return "attack the goblin standing there (it has \(g.hp) HP left)"
+            if let i = survivors.firstIndex(where: { $0.position == target }) {
+                if survivors[i].hp <= 1 {
+                    survivors.remove(at: i)
+                    parts.append("attack the goblin standing there and kill it (it has 1 HP left)")
+                } else {
+                    parts.append("attack the goblin standing there (it has \(survivors[i].hp) HP left)")
+                }
+            } else {
+                position = target
+                if target == exit { return "walk through the exit and win" }
+                if potionsOnFloor.contains(target) { parts.append("pick up the potion lying there") }
+                if goldOnFloor.contains(target) { parts.append("pick up the gold lying there") }
+                if parts.isEmpty {
+                    let before = stepsToExit(from: hero) ?? .max
+                    let after = stepsToExit(from: target) ?? .max
+                    parts.append(after < before ? "step closer to the exit" : "step away from the exit")
+                    if let lastStep, d == lastStep.opposite { parts.append("back where you just came from") }
+                }
             }
-            if target == exit { return "walk through the exit and win" }
-            var parts: [String] = []
-            if potionsOnFloor.contains(target) { parts.append("pick up the potion lying there") }
-            if goldOnFloor.contains(target) { parts.append("pick up the gold lying there") }
-            if parts.isEmpty {
-                let before = stepsToExit(from: hero) ?? .max
-                let after = stepsToExit(from: target) ?? .max
-                parts.append(after < before ? "step closer to the exit" : "step away from the exit")
-                if let lastStep, d == lastStep.opposite { parts.append("back where you just came from") }
-            }
-            if goblins.contains(where: { $0.position.isAdjacent(to: target) }) {
-                parts.append("a goblin could bite you there")
-            }
-            return parts.joined(separator: ", ")
         }
+        let bites = survivors.filter { $0.position.isAdjacent(to: position) }.count
+        hpAfter -= bites
+        if bites > 0 {
+            parts.append(hpAfter <= 0 ? "a goblin bites you and you die" : "a goblin bites you there")
+        }
+        return parts.joined(separator: ", ")
     }
 
     /// Resolve one turn: the hero acts, then every goblin acts. Returns what happened, in order.

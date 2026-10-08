@@ -147,7 +147,8 @@ The script wraps `xcodebuild` because `swift run` cannot find MLX's metallib (sa
 escapes 6 of seeds 1–11 with the 8-bit checkpoint and fights goblins more than it should; the random baseline escapes 1.
 Each decision is one prefill over ~400 tokens, ≈140 ms on an M4 Pro in Release. The option texts are the game being
 honest about what a move does (`step closer to the exit` uses the walking distance around walls, `back where you just
-came from` marks a reversal); change them in `Dungeon.describe` and the narrative in `Dungeon.narrative` to see how the
+came from` marks a reversal, and every option ends with its consequence: `kill it`, `leaving you at 2/5 HP`, `and you
+die` — a 0.8B model will not combine the hero's HP in the state with the goblin's HP in the option by itself); change them in `Dungeon.describe` and the narrative in `Dungeon.narrative` to see how the
 play changes. The engine tests never touch the model, so they run with plain `swift test --filter DungeonTests`.
 
 ### On an iPhone
