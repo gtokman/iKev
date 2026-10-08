@@ -9,7 +9,7 @@ generation, calibrated probabilities, a confidence you can threshold on. This pa
 ```swift
 import Kev
 
-let model = try await KevModel.load(hubID: "HumanInterfaceDesign/kev-0.8b-mlx-4bit")   // downloads once, then cached
+let model = try await KevModel.load(hubID: "gtokman/iKev")   // downloads once, then cached
 let answers = try await model.decide(
     state: "User message: set a timer for 10 minutes",
     questions: [
