@@ -50,6 +50,12 @@ public actor KevModel {
 
     /// Load a checkpoint directory produced by scripts/convert.py (or downloaded from the Hub).
     public static func load(directory: URL, tokenizerLoader: any TokenizerLoader) async throws -> KevModel {
+        // MLX reports Metal failures (e.g. GPU work refused while an iOS app is in the background)
+        // through fatalError unless a handler is installed; surface them as thrown MLXError instead.
+        try await withError { try await loadUnguarded(directory: directory, tokenizerLoader: tokenizerLoader) }
+    }
+
+    private static func loadUnguarded(directory: URL, tokenizerLoader: any TokenizerLoader) async throws -> KevModel {
         #if targetEnvironment(simulator)
             throw KevModelError.simulatorUnsupported
         #endif
@@ -104,6 +110,7 @@ public actor KevModel {
         let stateCount = encoding.state.count
         let head = self.head
         let logits: [[Float]] = try await container.perform { context in
+          try withError {
             guard let model = context.model as? Qwen35Model else {
                 throw KevModelError.unsupportedBackbone(String(describing: type(of: context.model)))
             }
@@ -122,6 +129,7 @@ public actor KevModel {
             }
             eval(out)
             return out.map { $0.asArray(Float.self) }
+          }
         }
         return zip(questions, logits).map { KevAnswer(question: $0, logits: $1.map(Double.init)) }
     }
