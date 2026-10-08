@@ -5,3 +5,7 @@ build/
 !Examples/DungeonApp/KevDungeon.xcodeproj
 DerivedData/
 *.profraw
+node_modules/
+.next/
+.env*.local
+*.tsbuildinfo
