@@ -135,9 +135,9 @@ scripts/kev-dungeon.sh --random --seed 7                           # uniform leg
 
 ```
 ── turn 6 ──────────────────────────────────
-  north        ███░░░░░░░ 0.30  attack the goblin standing there (it has 2 HP left)
+  north        ███░░░░░░░ 0.30  attack the goblin standing there (it has 2 HP left), a goblin bites you there
   south        ██░░░░░░░░ 0.20  pick up the potion lying there
-→ east         ████░░░░░░ 0.38  attack the goblin standing there (it has 2 HP left)
+→ east         ████░░░░░░ 0.38  attack the goblin standing there (it has 2 HP left), a goblin bites you there
   west         █░░░░░░░░░ 0.13  step away from the exit, back where you just came from
   danger: risky (safe 0.39, risky 0.47, deadly 0.14), confidence 0.17
   You strike the goblin to the east (1 HP left). The goblin bites you (HP 3/5).
@@ -147,8 +147,9 @@ The script wraps `xcodebuild` because `swift run` cannot find MLX's metallib (sa
 escapes 6 of seeds 1–11 with the 8-bit checkpoint and fights goblins more than it should; the random baseline escapes 1.
 Each decision is one prefill over ~400 tokens, ≈140 ms on an M4 Pro in Release. The option texts are the game being
 honest about what a move does (`step closer to the exit` uses the walking distance around walls, `back where you just
-came from` marks a reversal, and every option ends with its consequence: `kill it`, `leaving you at 2/5 HP`, `and you
-die` — a 0.8B model will not combine the hero's HP in the state with the goblin's HP in the option by itself); change them in `Dungeon.describe` and the narrative in `Dungeon.narrative` to see how the
+came from` marks a reversal, a finishing blow says `kill it`, and a fatal move ends with `a goblin bites you and you
+die`). Honesty has limits with 0.8B parameters: over seeds 1–20 Kev picked the option that literally says `and you die`
+in 8 of the 8 turns where a non-fatal move existed — it reads `attack` and goes for it. Change the texts in `Dungeon.describe` and the narrative in `Dungeon.narrative` to see how the
 play changes. The engine tests never touch the model, so they run with plain `swift test --filter DungeonTests`.
 
 ### On an iPhone
