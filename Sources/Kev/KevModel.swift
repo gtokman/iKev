@@ -126,3 +126,11 @@ public actor KevModel {
         return zip(questions, logits).map { KevAnswer(question: $0, logits: $1.map(Double.init)) }
     }
 }
+
+extension KevModel {
+    /// Drops MLX's cached buffers (inference scratch memory). Call after a decision or under memory pressure;
+    /// the next decision reallocates what it needs.
+    public nonisolated static func releaseCache() {
+        Memory.clearCache()
+    }
+}
